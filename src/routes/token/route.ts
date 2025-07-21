@@ -4,7 +4,7 @@ import { state } from "~/lib/state"
 
 export const tokenRoute = new Hono()
 
-tokenRoute.get("/", (c) => {
+tokenRoute.get("/", c => {
   try {
     return c.json({
       token: state.copilotToken,

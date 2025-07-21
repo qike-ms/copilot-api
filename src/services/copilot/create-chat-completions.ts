@@ -5,15 +5,11 @@ import { copilotHeaders, copilotBaseUrl } from "~/lib/api-config"
 import { HTTPError } from "~/lib/error"
 import { state } from "~/lib/state"
 
-export const createChatCompletions = async (
-  payload: ChatCompletionsPayload,
-) => {
+export const createChatCompletions = async (payload: ChatCompletionsPayload) => {
   if (!state.copilotToken) throw new Error("Copilot token not found")
 
   const enableVision = payload.messages.some(
-    (x) =>
-      typeof x.content !== "string"
-      && x.content?.some((x) => x.type === "image_url"),
+    x => typeof x.content !== "string" && x.content?.some(x => x.type === "image_url"),
   )
 
   const response = await fetch(`${copilotBaseUrl(state)}/chat/completions`, {
@@ -24,7 +20,7 @@ export const createChatCompletions = async (
 
   if (!response.ok) {
     consola.error("Failed to create chat completions", response)
-    throw new HTTPError("Failed to create chat completions", response)
+    throw new HTTPError("Failed to create chat completions", response.clone())
   }
 
   if (payload.stream) {
@@ -114,12 +110,7 @@ export interface ChatCompletionsPayload {
   response_format?: { type: "json_object" } | null
   seed?: number | null
   tools?: Array<Tool> | null
-  tool_choice?:
-    | "none"
-    | "auto"
-    | "required"
-    | { type: "function"; function: { name: string } }
-    | null
+  tool_choice?: "none" | "auto" | "required" | { type: "function"; function: { name: string } } | null
   user?: string | null
 }
 

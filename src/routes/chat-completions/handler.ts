@@ -25,9 +25,7 @@ export async function handleCompletion(c: Context) {
   if (state.manualApprove) await awaitApproval()
 
   if (isNullish(payload.max_tokens)) {
-    const selectedModel = state.models?.data.find(
-      (model) => model.id === payload.model,
-    )
+    const selectedModel = state.models?.data.find(model => model.id === payload.model)
 
     payload = {
       ...payload,
@@ -44,7 +42,7 @@ export async function handleCompletion(c: Context) {
   }
 
   consola.debug("Streaming response")
-  return streamSSE(c, async (stream) => {
+  return streamSSE(c, async stream => {
     for await (const chunk of response) {
       consola.debug("Streaming chunk:", JSON.stringify(chunk))
       await stream.writeSSE(chunk as SSEMessage)

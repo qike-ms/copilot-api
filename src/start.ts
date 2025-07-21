@@ -25,7 +25,6 @@ interface RunServerOptions {
   showToken: boolean
 }
 
-// eslint-disable-next-line max-lines-per-function
 export async function runServer(options: RunServerOptions): Promise<void> {
   if (options.verbose) {
     consola.level = 5
@@ -55,30 +54,22 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   await setupCopilotToken()
   await cacheModels()
 
-  consola.info(
-    `Available models: \n${state.models?.data.map((model) => `- ${model.id}`).join("\n")}`,
-  )
+  consola.info(`Available models: \n${state.models?.data.map(model => `- ${model.id}`).join("\n")}`)
 
   const serverUrl = `http://localhost:${options.port}`
 
   if (options.claudeCode) {
     invariant(state.models, "Models should be loaded by now")
 
-    const selectedModel = await consola.prompt(
-      "Select a model to use with Claude Code",
-      {
-        type: "select",
-        options: state.models.data.map((model) => model.id),
-      },
-    )
+    const selectedModel = await consola.prompt("Select a model to use with Claude Code", {
+      type: "select",
+      options: state.models.data.map(model => model.id),
+    })
 
-    const selectedSmallModel = await consola.prompt(
-      "Select a small model to use with Claude Code",
-      {
-        type: "select",
-        options: state.models.data.map((model) => model.id),
-      },
-    )
+    const selectedSmallModel = await consola.prompt("Select a small model to use with Claude Code", {
+      type: "select",
+      options: state.models.data.map(model => model.id),
+    })
 
     const command = generateEnvScript(
       {
@@ -94,9 +85,7 @@ export async function runServer(options: RunServerOptions): Promise<void> {
     consola.success("Copied Claude Code command to clipboard!")
   }
 
-  consola.box(
-    `🌐 Usage Viewer: https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/usage`,
-  )
+  consola.box(`🌐 Usage Viewer: https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/usage`)
 
   serve({
     fetch: server.fetch as ServerHandler,
@@ -142,21 +131,18 @@ export const start = defineCommand({
       alias: "w",
       type: "boolean",
       default: false,
-      description:
-        "Wait instead of error when rate limit is hit. Has no effect if rate limit is not set",
+      description: "Wait instead of error when rate limit is hit. Has no effect if rate limit is not set",
     },
     "github-token": {
       alias: "g",
       type: "string",
-      description:
-        "Provide GitHub token directly (must be generated using the `auth` subcommand)",
+      description: "Provide GitHub token directly (must be generated using the `auth` subcommand)",
     },
     "claude-code": {
       alias: "c",
       type: "boolean",
       default: false,
-      description:
-        "Generate a command to launch Claude Code with Copilot API config",
+      description: "Generate a command to launch Claude Code with Copilot API config",
     },
     "show-token": {
       type: "boolean",

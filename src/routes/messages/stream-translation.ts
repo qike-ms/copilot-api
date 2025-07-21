@@ -1,9 +1,6 @@
 import { type ChatCompletionChunk } from "~/services/copilot/create-chat-completions"
 
-import {
-  type AnthropicStreamEventData,
-  type AnthropicStreamState,
-} from "./anthropic-types"
+import { type AnthropicStreamEventData, type AnthropicStreamState } from "./anthropic-types"
 import { mapOpenAIStopReasonToAnthropic } from "./utils"
 
 function isToolBlockOpen(state: AnthropicStreamState): boolean {
@@ -11,12 +8,9 @@ function isToolBlockOpen(state: AnthropicStreamState): boolean {
     return false
   }
   // Check if the current block index corresponds to any known tool call
-  return Object.values(state.toolCalls).some(
-    (tc) => tc.anthropicBlockIndex === state.contentBlockIndex,
-  )
+  return Object.values(state.toolCalls).some(tc => tc.anthropicBlockIndex === state.contentBlockIndex)
 }
 
-// eslint-disable-next-line max-lines-per-function, complexity
 export function translateChunkToAnthropicEvents(
   chunk: ChatCompletionChunk,
   state: AnthropicStreamState,

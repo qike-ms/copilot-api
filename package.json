@@ -48,7 +48,7 @@
     "tiny-invariant": "^1.3.3"
   },
   "devDependencies": {
-    "@echristian/eslint-config": "^0.0.43",
+    "@echristian/eslint-config": "^0.0.18",
     "@types/bun": "^1.2.16",
     "bumpp": "^10.2.0",
     "eslint": "^9.29.0",

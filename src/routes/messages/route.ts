@@ -6,7 +6,7 @@ import { handleCompletion } from "./handler"
 
 export const messageRoutes = new Hono()
 
-messageRoutes.post("/", async (c) => {
+messageRoutes.post("/", async c => {
   try {
     return await handleCompletion(c)
   } catch (error) {

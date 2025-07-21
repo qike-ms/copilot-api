@@ -25,15 +25,10 @@ import { mapOpenAIStopReasonToAnthropic } from "./utils"
 
 // Payload translation
 
-export function translateToOpenAI(
-  payload: AnthropicMessagesPayload,
-): ChatCompletionsPayload {
+export function translateToOpenAI(payload: AnthropicMessagesPayload): ChatCompletionsPayload {
   return {
     model: payload.model,
-    messages: translateAnthropicMessagesToOpenAI(
-      payload.messages,
-      payload.system,
-    ),
+    messages: translateAnthropicMessagesToOpenAI(payload.messages, payload.system),
     max_tokens: payload.max_tokens,
     stop: payload.stop_sequences,
     stream: payload.stream,
@@ -51,18 +46,14 @@ function translateAnthropicMessagesToOpenAI(
 ): Array<Message> {
   const systemMessages = handleSystemPrompt(system)
 
-  const otherMessages = anthropicMessages.flatMap((message) =>
-    message.role === "user" ?
-      handleUserMessage(message)
-    : handleAssistantMessage(message),
+  const otherMessages = anthropicMessages.flatMap(message =>
+    message.role === "user" ? handleUserMessage(message) : handleAssistantMessage(message),
   )
 
   return [...systemMessages, ...otherMessages]
 }
 
-function handleSystemPrompt(
-  system: string | Array<AnthropicTextBlock> | undefined,
-): Array<Message> {
+function handleSystemPrompt(system: string | Array<AnthropicTextBlock> | undefined): Array<Message> {
   if (!system) {
     return []
   }
@@ -70,7 +61,7 @@ function handleSystemPrompt(
   if (typeof system === "string") {
     return [{ role: "system", content: system }]
   } else {
-    const systemText = system.map((block) => block.text).join("\n\n")
+    const systemText = system.map(block => block.text).join("\n\n")
     return [{ role: "system", content: systemText }]
   }
 }
@@ -80,12 +71,9 @@ function handleUserMessage(message: AnthropicUserMessage): Array<Message> {
 
   if (Array.isArray(message.content)) {
     const toolResultBlocks = message.content.filter(
-      (block): block is AnthropicToolResultBlock =>
-        block.type === "tool_result",
+      (block): block is AnthropicToolResultBlock => block.type === "tool_result",
     )
-    const otherBlocks = message.content.filter(
-      (block) => block.type !== "tool_result",
-    )
+    const otherBlocks = message.content.filter(block => block.type !== "tool_result")
 
     if (otherBlocks.length > 0) {
       newMessages.push({
@@ -111,9 +99,7 @@ function handleUserMessage(message: AnthropicUserMessage): Array<Message> {
   return newMessages
 }
 
-function handleAssistantMessage(
-  message: AnthropicAssistantMessage,
-): Array<Message> {
+function handleAssistantMessage(message: AnthropicAssistantMessage): Array<Message> {
   if (!Array.isArray(message.content)) {
     return [
       {
@@ -123,20 +109,16 @@ function handleAssistantMessage(
     ]
   }
 
-  const toolUseBlocks = message.content.filter(
-    (block): block is AnthropicToolUseBlock => block.type === "tool_use",
-  )
+  const toolUseBlocks = message.content.filter((block): block is AnthropicToolUseBlock => block.type === "tool_use")
 
-  const textBlocks = message.content.filter(
-    (block): block is AnthropicTextBlock => block.type === "text",
-  )
+  const textBlocks = message.content.filter((block): block is AnthropicTextBlock => block.type === "text")
 
   return toolUseBlocks.length > 0 ?
       [
         {
           role: "assistant",
-          content: textBlocks.map((b) => b.text).join("\n\n") || null,
-          tool_calls: toolUseBlocks.map((toolUse) => ({
+          content: textBlocks.map(b => b.text).join("\n\n") || null,
+          tool_calls: toolUseBlocks.map(toolUse => ({
             id: toolUse.id,
             type: "function",
             function: {
@@ -155,9 +137,7 @@ function handleAssistantMessage(
 }
 
 function mapContent(
-  content:
-    | string
-    | Array<AnthropicUserContentBlock | AnthropicAssistantContentBlock>,
+  content: string | Array<AnthropicUserContentBlock | AnthropicAssistantContentBlock>,
 ): string | Array<ContentPart> | null {
   if (typeof content === "string") {
     return content
@@ -166,11 +146,11 @@ function mapContent(
     return null
   }
 
-  const hasImage = content.some((block) => block.type === "image")
+  const hasImage = content.some(block => block.type === "image")
   if (!hasImage) {
     return content
       .filter((block): block is AnthropicTextBlock => block.type === "text")
-      .map((block) => block.text)
+      .map(block => block.text)
       .join("\n\n")
   }
 
@@ -190,13 +170,11 @@ function mapContent(
   return contentParts
 }
 
-function translateAnthropicToolsToOpenAI(
-  anthropicTools: Array<AnthropicTool> | undefined,
-): Array<Tool> | undefined {
+function translateAnthropicToolsToOpenAI(anthropicTools: Array<AnthropicTool> | undefined): Array<Tool> | undefined {
   if (!anthropicTools) {
     return undefined
   }
-  return anthropicTools.map((tool) => ({
+  return anthropicTools.map(tool => ({
     type: "function",
     function: {
       name: tool.name,
@@ -240,9 +218,7 @@ function translateAnthropicToolChoiceToOpenAI(
 
 // Response translation
 
-export function translateToAnthropic(
-  response: ChatCompletionResponse,
-): AnthropicResponse {
+export function translateToAnthropic(response: ChatCompletionResponse): AnthropicResponse {
   const choice = response.choices[0]
   const textBlocks = getAnthropicTextBlocks(choice.message.content)
   const toolUseBlocks = getAnthropicToolUseBlocks(choice.message.tool_calls)
@@ -262,9 +238,7 @@ export function translateToAnthropic(
   }
 }
 
-function getAnthropicTextBlocks(
-  messageContent: Message["content"],
-): Array<AnthropicTextBlock> {
+function getAnthropicTextBlocks(messageContent: Message["content"]): Array<AnthropicTextBlock> {
   if (typeof messageContent === "string") {
     return [{ type: "text", text: messageContent }]
   }
@@ -272,19 +246,17 @@ function getAnthropicTextBlocks(
   if (Array.isArray(messageContent)) {
     return messageContent
       .filter((part): part is TextPart => part.type === "text")
-      .map((part) => ({ type: "text", text: part.text }))
+      .map(part => ({ type: "text", text: part.text }))
   }
 
   return []
 }
 
-function getAnthropicToolUseBlocks(
-  toolCalls: Array<ToolCall> | undefined,
-): Array<AnthropicToolUseBlock> {
+function getAnthropicToolUseBlocks(toolCalls: Array<ToolCall> | undefined): Array<AnthropicToolUseBlock> {
   if (!toolCalls) {
     return []
   }
-  return toolCalls.map((toolCall) => ({
+  return toolCalls.map(toolCall => ({
     type: "tool_use",
     id: toolCall.id,
     name: toolCall.function.name,

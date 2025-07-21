@@ -58,15 +58,9 @@ export interface AnthropicThinkingBlock {
   thinking: string
 }
 
-export type AnthropicUserContentBlock =
-  | AnthropicTextBlock
-  | AnthropicImageBlock
-  | AnthropicToolResultBlock
+export type AnthropicUserContentBlock = AnthropicTextBlock | AnthropicImageBlock | AnthropicToolResultBlock
 
-export type AnthropicAssistantContentBlock =
-  | AnthropicTextBlock
-  | AnthropicToolUseBlock
-  | AnthropicThinkingBlock
+export type AnthropicAssistantContentBlock = AnthropicTextBlock | AnthropicToolUseBlock | AnthropicThinkingBlock
 
 export interface AnthropicUserMessage {
   role: "user"
@@ -92,14 +86,7 @@ export interface AnthropicResponse {
   role: "assistant"
   content: Array<AnthropicAssistantContentBlock>
   model: string
-  stop_reason:
-    | "end_turn"
-    | "max_tokens"
-    | "stop_sequence"
-    | "tool_use"
-    | "pause_turn"
-    | "refusal"
-    | null
+  stop_reason: "end_turn" | "max_tokens" | "stop_sequence" | "tool_use" | "pause_turn" | "refusal" | null
   stop_sequence: string | null
   usage: {
     input_tokens: number
@@ -115,10 +102,7 @@ export type AnthropicResponseContentBlock = AnthropicAssistantContentBlock
 // Anthropic Stream Event Types
 export interface AnthropicMessageStartEvent {
   type: "message_start"
-  message: Omit<
-    AnthropicResponse,
-    "content" | "stop_reason" | "stop_sequence"
-  > & {
+  message: Omit<AnthropicResponse, "content" | "stop_reason" | "stop_sequence"> & {
     content: []
     stop_reason: null
     stop_sequence: null
@@ -191,11 +175,12 @@ export interface AnthropicStreamState {
   messageStartSent: boolean
   contentBlockIndex: number
   contentBlockOpen: boolean
-  toolCalls: {
-    [openAIToolIndex: number]: {
+  toolCalls: Record<
+    number,
+    {
       id: string
       name: string
       anthropicBlockIndex: number
     }
-  }
+  >
 }

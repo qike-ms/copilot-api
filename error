@@ -1,0 +1,182 @@
+Failed to create chat completions Response { status: 400,                                                                                                                                                                                                                                                                                            10:07:00 PM
+  statusText: 'Bad Request',
+  headers:
+   Headers { 'content-security-policy': "default-src 'none'; sandbox",
+     'content-type': 'text/plain; charset=utf-8',
+     'strict-transport-security': 'max-age=31536000',
+     'x-content-type-options': 'nosniff',
+     'x-request-id': '41d83d83-39d2-4d14-8bd7-69f3133ccb5c',
+     date: 'Mon, 21 Jul 2025 02:07:00 GMT',
+     'content-length': '121',
+     'x-github-backend': 'Kubernetes',
+     'x-github-request-id': 'FA11:36958F:116AA66:19DCF57:687DA0C3' },
+  body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+  bodyUsed: false,
+  ok: false,
+  redirected: false,
+  type: 'basic',
+  url: 'https://api.githubcopilot.com/chat/completions' }
+
+
+ ERROR  Error occurred: Failed to create chat completions                                                                                                                                                                                                                                                                                                    10:07:00 PM
+
+    at I (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:8395)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async _e (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3051)
+    at async /opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3757
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async /opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/hono-base.js:201:25
+
+
+ ERROR  HTTP error: { error:                                                                                                                                                                                                                                                                                                                                 10:07:00 PM
+   { message: 'prompt token count of 38086 exceeds the limit of 12288',
+     code: 'model_max_prompt_tokens_exceeded' } }
+
+TypeError: Body is unusable: Body has already been read
+    at consumeBody (node:internal/deps/undici/undici:6197:15)
+    at _Response.text (node:internal/deps/undici/undici:6149:18)
+    at f (file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:1937)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3785
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+--> POST /v1/messages?beta=true 500 163ms
+<-- POST /v1/messages?beta=true
+<-- POST /v1/messages?beta=true
+<-- POST /v1/messages?beta=true
+<-- POST /v1/messages?beta=true
+
+ ERROR  Failed to create chat completions Response { status: 400,                                                                                                                                                                                                                                                                                            10:07:00 PM
+  statusText: 'Bad Request',
+  headers:
+   Headers { 'content-security-policy': "default-src 'none'; sandbox",
+     'content-type': 'text/plain; charset=utf-8',
+     'strict-transport-security': 'max-age=31536000',
+     'x-content-type-options': 'nosniff',
+     'x-request-id': '2d1d29da-685f-45d8-85ca-73bb43e326a9',
+     date: 'Mon, 21 Jul 2025 02:07:00 GMT',
+     'content-length': '121',
+     'x-github-backend': 'Kubernetes',
+     'x-github-request-id': 'FA15:23B4F8:11F9E84:1A6C6D6:687DA0C4' },
+  body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+  bodyUsed: false,
+  ok: false,
+  redirected: false,
+  type: 'basic',
+  url: 'https://api.githubcopilot.com/chat/completions' }
+
+
+ ERROR  Error occurred: Failed to create chat completions                                                                                                                                                                                                                                                                                                    10:07:00 PM
+
+    at I (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:8395)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async _e (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3051)
+    at async /opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3757
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async /opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/hono-base.js:201:25
+
+
+ ERROR  HTTP error: { error:                                                                                                                                                                                                                                                                                                                                 10:07:00 PM
+   { message: 'prompt token count of 38118 exceeds the limit of 12288',
+     code: 'model_max_prompt_tokens_exceeded' } }
+
+TypeError: Body is unusable: Body has already been read
+    at consumeBody (node:internal/deps/undici/undici:6197:15)
+    at _Response.text (node:internal/deps/undici/undici:6149:18)
+    at f (file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:1937)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3785
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+--> POST /v1/messages?beta=true 500 185ms
+<-- POST /v1/messages?beta=true
+
+ ERROR  Failed to create chat completions Response { status: 400,                                                                                                                                                                                                                                                                                            10:07:00 PM
+  statusText: 'Bad Request',
+  headers:
+   Headers { 'content-security-policy': "default-src 'none'; sandbox",
+     'content-type': 'text/plain; charset=utf-8',
+     'strict-transport-security': 'max-age=31536000',
+     'x-content-type-options': 'nosniff',
+     'x-request-id': '9b2eb634-efcb-49bd-8564-37586723152d',
+     date: 'Mon, 21 Jul 2025 02:07:00 GMT',
+     'content-length': '121',
+     'x-github-backend': 'Kubernetes',
+     'x-github-request-id': 'FA16:29AE3:124F130:1AC1686:687DA0C4' },
+  body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+  bodyUsed: false,
+  ok: false,
+  redirected: false,
+  type: 'basic',
+  url: 'https://api.githubcopilot.com/chat/completions' }
+
+
+==== Another type of error
+
+ ERROR  Failed to create chat completions Response { status: 400,                                                                                                                                                                                                                                                                                            10:41:45 PM
+  statusText: 'Bad Request',
+  headers:
+   Headers { 'content-security-policy': "default-src 'none'; sandbox",
+     'content-type': 'text/plain; charset=utf-8',
+     'copilot-edits-session': '1753065705.9efa8bff3078ac865b1a160f6fa9657139f3cd6c1ea6b996d6374f3a8974e2b3',
+     'strict-transport-security': 'max-age=31536000',
+     'x-content-type-options': 'nosniff',
+     'x-request-id': '203d3d27-490e-4626-a963-0b09264195ad',
+     date: 'Mon, 21 Jul 2025 02:41:45 GMT',
+     'content-length': '262',
+     'x-github-backend': 'Kubernetes',
+     'x-github-request-id': 'DF13:21EB25:4A9D5E:730FA5:687DA8E9' },
+  body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+  bodyUsed: false,
+  ok: false,
+  redirected: false,
+  type: 'basic',
+  url: 'https://api.githubcopilot.com/chat/completions' }
+
+
+ ERROR  Error occurred: Failed to create chat completions                                                                                                                                                                                                                                                                                                    10:41:45 PM
+
+    at I (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:8395)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async _e (/opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3051)
+    at async /opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3757
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (/opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async /opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/hono-base.js:201:25
+
+
+ ERROR  HTTP error: { error:                                                                                                                                                                                                                                                                                                                                 10:41:45 PM
+   { message:
+      'messages.18: tool_use ids were found without tool_result blocks immediately after: toolu_01Q95M24t5XMGeGNmasEqAnY. Each tool_use block must have a corresponding tool_result block in the next message.',
+     code: 'invalid_request_body' } }
+
+TypeError: Body is unusable: Body has already been read
+    at consumeBody (node:internal/deps/undici/undici:6197:15)
+    at _Response.text (node:internal/deps/undici/undici:6149:18)
+    at f (file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:2:1937)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/copilot-api/dist/main.js:8:3785
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async cors2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/cors/index.js:84:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+    at async logger2 (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/middleware/logger/index.js:38:5)
+    at async dispatch (file:///opt/homebrew/lib/node_modules/copilot-api/node_modules/hono/dist/compose.js:22:17)
+--> POST /v1/messages?beta=true 500 444ms
+

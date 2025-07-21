@@ -7,14 +7,13 @@ export async function getVSCodeVersion() {
   }, 5000)
 
   try {
-    const response = await fetch(
-      "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=visual-studio-code-bin",
-      { signal: controller.signal },
-    )
+    const response = await fetch("https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=visual-studio-code-bin", {
+      signal: controller.signal,
+    })
 
     const pkgbuild = await response.text()
     const pkgverRegex = /pkgver=([0-9.]+)/
-    const match = pkgbuild.match(pkgverRegex)
+    const match = pkgverRegex.exec(pkgbuild)
 
     if (match) {
       return match[1]

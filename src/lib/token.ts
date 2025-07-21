@@ -12,8 +12,7 @@ import { state } from "./state"
 
 const readGithubToken = () => fs.readFile(PATHS.GITHUB_TOKEN_PATH, "utf8")
 
-const writeGithubToken = (token: string) =>
-  fs.writeFile(PATHS.GITHUB_TOKEN_PATH, token)
+const writeGithubToken = (token: string) => fs.writeFile(PATHS.GITHUB_TOKEN_PATH, token)
 
 export const setupCopilotToken = async () => {
   const { token, refresh_in } = await getCopilotToken()
@@ -46,9 +45,7 @@ interface SetupGitHubTokenOptions {
   force?: boolean
 }
 
-export async function setupGitHubToken(
-  options?: SetupGitHubTokenOptions,
-): Promise<void> {
+export async function setupGitHubToken(options?: SetupGitHubTokenOptions): Promise<void> {
   try {
     const githubToken = await readGithubToken()
 
@@ -66,9 +63,7 @@ export async function setupGitHubToken(
     const response = await getDeviceCode()
     consola.debug("Device code response:", response)
 
-    consola.info(
-      `Please enter the code "${response.user_code}" in ${response.verification_uri}`,
-    )
+    consola.info(`Please enter the code "${response.user_code}" in ${response.verification_uri}`)
 
     const token = await pollAccessToken(response)
     await writeGithubToken(token)

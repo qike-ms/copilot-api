@@ -12,17 +12,10 @@ import {
   type ChatCompletionResponse,
 } from "~/services/copilot/create-chat-completions"
 
-import {
-  type AnthropicMessagesPayload,
-  type AnthropicStreamState,
-} from "./anthropic-types"
-import {
-  translateToAnthropic,
-  translateToOpenAI,
-} from "./non-stream-translation"
+import { type AnthropicMessagesPayload, type AnthropicStreamState } from "./anthropic-types"
+import { translateToAnthropic, translateToOpenAI } from "./non-stream-translation"
 import { translateChunkToAnthropicEvents } from "./stream-translation"
 
-// eslint-disable-next-line max-lines-per-function
 export async function handleCompletion(c: Context) {
   await checkRateLimit(state)
 
@@ -30,10 +23,7 @@ export async function handleCompletion(c: Context) {
   consola.debug("Anthropic request payload:", JSON.stringify(anthropicPayload))
 
   const openAIPayload = translateToOpenAI(anthropicPayload)
-  consola.debug(
-    "Translated OpenAI request payload:",
-    JSON.stringify(openAIPayload),
-  )
+  consola.debug("Translated OpenAI request payload:", JSON.stringify(openAIPayload))
 
   if (state.manualApprove) {
     await awaitApproval()
@@ -42,20 +32,14 @@ export async function handleCompletion(c: Context) {
   const response = await createChatCompletions(openAIPayload)
 
   if (isNonStreaming(response)) {
-    consola.debug(
-      "Non-streaming response from Copilot:",
-      JSON.stringify(response).slice(-400),
-    )
+    consola.debug("Non-streaming response from Copilot:", JSON.stringify(response).slice(-400))
     const anthropicResponse = translateToAnthropic(response)
-    consola.debug(
-      "Translated Anthropic response:",
-      JSON.stringify(anthropicResponse),
-    )
+    consola.debug("Translated Anthropic response:", JSON.stringify(anthropicResponse))
     return c.json(anthropicResponse)
   }
 
   consola.debug("Streaming response from Copilot")
-  return streamSSE(c, async (stream) => {
+  return streamSSE(c, async stream => {
     const streamState: AnthropicStreamState = {
       messageStartSent: false,
       contentBlockIndex: 0,

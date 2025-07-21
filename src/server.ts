@@ -14,7 +14,7 @@ export const server = new Hono()
 server.use(logger())
 server.use(cors())
 
-server.get("/", (c) => c.text("Server running"))
+server.get("/", c => c.text("Server running"))
 
 server.route("/chat/completions", completionRoutes)
 server.route("/models", modelRoutes)
@@ -29,4 +29,4 @@ server.route("/v1/embeddings", embeddingRoutes)
 
 // Anthropic compatible endpoints
 server.route("/v1/messages", messageRoutes)
-server.post("/v1/messages/count_tokens", (c) => c.json({ input_tokens: 1 }))
+server.post("/v1/messages/count_tokens", c => c.json({ input_tokens: 1 }))

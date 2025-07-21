@@ -39,41 +39,28 @@ function getShell(): ShellName {
  * @param {string} commandToRun - The command to run after setting the variables.
  * @returns {string} The formatted script string.
  */
-export function generateEnvScript(
-  envVars: EnvVars,
-  commandToRun: string = "",
-): string {
+export function generateEnvScript(envVars: EnvVars, commandToRun = ""): string {
   const shell = getShell()
-  const filteredEnvVars = Object.entries(envVars).filter(
-    ([, value]) => value !== undefined,
-  ) as Array<[string, string]>
+  const filteredEnvVars = Object.entries(envVars).filter(([, value]) => value !== undefined) as Array<[string, string]>
 
   let commandBlock: string
 
   switch (shell) {
     case "powershell": {
-      commandBlock = filteredEnvVars
-        .map(([key, value]) => `$env:${key} = ${value}`)
-        .join("; ")
+      commandBlock = filteredEnvVars.map(([key, value]) => `$env:${key} = ${value}`).join("; ")
       break
     }
     case "cmd": {
-      commandBlock = filteredEnvVars
-        .map(([key, value]) => `set ${key}=${value}`)
-        .join(" & ")
+      commandBlock = filteredEnvVars.map(([key, value]) => `set ${key}=${value}`).join(" & ")
       break
     }
     case "fish": {
-      commandBlock = filteredEnvVars
-        .map(([key, value]) => `set -gx ${key} ${value}`)
-        .join("; ")
+      commandBlock = filteredEnvVars.map(([key, value]) => `set -gx ${key} ${value}`).join("; ")
       break
     }
     default: {
       // bash, zsh, sh
-      const assignments = filteredEnvVars
-        .map(([key, value]) => `${key}=${value}`)
-        .join(" ")
+      const assignments = filteredEnvVars.map(([key, value]) => `${key}=${value}`).join(" ")
       commandBlock = filteredEnvVars.length > 0 ? `export ${assignments}` : ""
       break
     }
