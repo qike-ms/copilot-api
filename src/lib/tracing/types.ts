@@ -50,7 +50,7 @@ export interface GithubResponse {
   headers: Record<string, string>
   body?: unknown
   body_raw?: string
-  events?: SSEEvent[]
+  events?: Array<SSEEvent>
   token_usage?: TokenUsage
   model_used?: string
 }
@@ -61,7 +61,7 @@ export interface ClientResponse {
   headers: Record<string, string>
   body?: unknown
   body_raw?: string
-  events?: unknown[]
+  events?: Array<unknown>
   processing_time_ms: number
   token_usage?: TokenUsage
 }
@@ -105,8 +105,8 @@ export interface StreamingFinalization {
   total_chunks: number
   complete_response: string
   format: "openai" | "anthropic"
-  openai_chunks?: string[]
-  anthropic_events?: unknown[]
+  openai_chunks?: Array<string>
+  anthropic_events?: Array<unknown>
   original_format?: string
   translation_stats?: unknown
 }

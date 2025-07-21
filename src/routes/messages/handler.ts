@@ -6,6 +6,7 @@ import { streamSSE } from "hono/streaming"
 import { awaitApproval } from "~/lib/approval"
 import { checkRateLimit } from "~/lib/rate-limit"
 import { state } from "~/lib/state"
+import { getTracer } from "~/lib/tracing"
 import {
   createChatCompletions,
   type ChatCompletionChunk,
@@ -17,58 +18,85 @@ import { translateToAnthropic, translateToOpenAI } from "./non-stream-translatio
 import { translateChunkToAnthropicEvents } from "./stream-translation"
 
 export async function handleCompletion(c: Context) {
-  await checkRateLimit(state)
+  const tracer = getTracer()
+  const startTime = Date.now() / 1000
 
-  const anthropicPayload = await c.req.json<AnthropicMessagesPayload>()
-  consola.debug("Anthropic request payload:", JSON.stringify(anthropicPayload))
+  // Capture initial Anthropic request
+  const traceId = await tracer.captureClientRequest(c.req, "anthropic_messages")
 
-  const openAIPayload = translateToOpenAI(anthropicPayload)
-  consola.debug("Translated OpenAI request payload:", JSON.stringify(openAIPayload))
+  try {
+    await checkRateLimit(state)
 
-  if (state.manualApprove) {
-    await awaitApproval()
-  }
+    const anthropicPayload = await c.req.json<AnthropicMessagesPayload>()
+    consola.debug("Anthropic request payload:", JSON.stringify(anthropicPayload))
 
-  const response = await createChatCompletions(openAIPayload)
+    const openAIPayload = translateToOpenAI(anthropicPayload)
+    consola.debug("Translated OpenAI request payload:", JSON.stringify(openAIPayload))
 
-  if (isNonStreaming(response)) {
-    consola.debug("Non-streaming response from Copilot:", JSON.stringify(response).slice(-400))
-    const anthropicResponse = translateToAnthropic(response)
-    consola.debug("Translated Anthropic response:", JSON.stringify(anthropicResponse))
-    return c.json(anthropicResponse)
-  }
-
-  consola.debug("Streaming response from Copilot")
-  return streamSSE(c, async stream => {
-    const streamState: AnthropicStreamState = {
-      messageStartSent: false,
-      contentBlockIndex: 0,
-      contentBlockOpen: false,
-      toolCalls: {},
+    if (state.manualApprove) {
+      await awaitApproval()
     }
 
-    for await (const rawEvent of response) {
-      consola.debug("Copilot raw stream event:", JSON.stringify(rawEvent))
-      if (rawEvent.data === "[DONE]") {
-        break
-      }
+    const response = await createChatCompletions(openAIPayload, traceId)
 
-      if (!rawEvent.data) {
-        continue
-      }
+    if (isNonStreaming(response)) {
+      consola.debug("Non-streaming response from Copilot:", JSON.stringify(response).slice(-400))
+      const anthropicResponse = translateToAnthropic(response)
+      consola.debug("Translated Anthropic response:", JSON.stringify(anthropicResponse))
 
-      const chunk = JSON.parse(rawEvent.data) as ChatCompletionChunk
-      const events = translateChunkToAnthropicEvents(chunk, streamState)
+      // Capture final Anthropic response for tracing
+      await tracer.captureClientResponse(traceId, anthropicResponse, startTime, "anthropic")
 
-      for (const event of events) {
-        consola.debug("Translated Anthropic event:", JSON.stringify(event))
-        await stream.writeSSE({
-          event: event.type,
-          data: JSON.stringify(event),
-        })
-      }
+      return c.json(anthropicResponse)
     }
-  })
+
+    consola.debug("Streaming response from Copilot")
+    return streamSSE(c, async stream => {
+      const streamState: AnthropicStreamState = {
+        messageStartSent: false,
+        contentBlockIndex: 0,
+        contentBlockOpen: false,
+        toolCalls: {},
+      }
+
+      const anthropicEvents: Array<any> = []
+
+      try {
+        for await (const rawEvent of response) {
+          consola.debug("Copilot raw stream event:", JSON.stringify(rawEvent))
+          if (rawEvent.data === "[DONE]") {
+            break
+          }
+
+          if (!rawEvent.data) {
+            continue
+          }
+
+          const chunk = JSON.parse(rawEvent.data) as ChatCompletionChunk
+          const events = translateChunkToAnthropicEvents(chunk, streamState)
+
+          for (const event of events) {
+            consola.debug("Translated Anthropic event:", JSON.stringify(event))
+            anthropicEvents.push(event)
+
+            await stream.writeSSE({
+              event: event.type,
+              data: JSON.stringify(event),
+            })
+          }
+        }
+
+        // Finalize streaming trace with collected events
+        await tracer.captureClientResponse(traceId, { events: anthropicEvents }, startTime, "anthropic")
+      } catch (error) {
+        await tracer.logError(traceId, "response_translation", error)
+        throw error
+      }
+    })
+  } catch (error) {
+    await tracer.logError(traceId, "translation", error)
+    throw error
+  }
 }
 
 const isNonStreaming = (

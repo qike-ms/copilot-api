@@ -4,22 +4,42 @@ import { events } from "fetch-event-stream"
 import { copilotHeaders, copilotBaseUrl } from "~/lib/api-config"
 import { HTTPError } from "~/lib/error"
 import { state } from "~/lib/state"
+import { getTracer } from "~/lib/tracing"
 
-export const createChatCompletions = async (payload: ChatCompletionsPayload) => {
+export const createChatCompletions = async (payload: ChatCompletionsPayload, traceId?: string) => {
   if (!state.copilotToken) throw new Error("Copilot token not found")
 
   const enableVision = payload.messages.some(
     x => typeof x.content !== "string" && x.content?.some(x => x.type === "image_url"),
   )
 
-  const response = await fetch(`${copilotBaseUrl(state)}/chat/completions`, {
+  const tracer = getTracer()
+  const url = `${copilotBaseUrl(state)}/chat/completions`
+  const headers = copilotHeaders(state, enableVision)
+
+  // Capture GitHub API request for tracing
+  if (traceId) {
+    await tracer.captureGithubRequest(traceId, payload, url, headers, payload.model, payload.stream ?? false)
+  }
+
+  const response = await fetch(url, {
     method: "POST",
-    headers: copilotHeaders(state, enableVision),
+    headers,
     body: JSON.stringify(payload),
   })
 
+  // Capture GitHub API response for tracing
+  if (traceId) {
+    await tracer.captureGithubResponse(traceId, response)
+  }
+
   if (!response.ok) {
     consola.error("Failed to create chat completions", response)
+
+    if (traceId) {
+      await tracer.logError(traceId, "github_api", new HTTPError("Failed to create chat completions", response.clone()))
+    }
+
     throw new HTTPError("Failed to create chat completions", response.clone())
   }
 

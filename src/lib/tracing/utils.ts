@@ -4,8 +4,28 @@
  */
 
 import { randomBytes } from "crypto"
+import { statSync, existsSync } from "fs"
 
 import { TokenCount } from "./types"
+
+// Types for message structures
+interface MessageContent {
+  type?: string
+  text?: string
+}
+
+interface ToolCall {
+  function?: {
+    name?: string
+    arguments?: string | unknown
+  }
+}
+
+interface Message {
+  role?: string
+  content?: string | Array<MessageContent>
+  tool_calls?: Array<ToolCall>
+}
 
 /**
  * Generates a unique trace ID
@@ -33,6 +53,13 @@ export function getCurrentTimestamp(): number {
  */
 export function getCurrentISOTimestamp(): string {
   return new Date().toISOString()
+}
+
+/**
+ * Calculates processing time in milliseconds between start and end timestamps
+ */
+export function calculateProcessingTime(startTime: number, endTime: number): number {
+  return (endTime - startTime) * 1000 // Convert from seconds to milliseconds
 }
 
 /**
@@ -82,7 +109,7 @@ export function redactSensitiveHeaders(headers: Record<string, string>): Record<
  * Estimates token count from messages (simplified version of existing getTokenCount)
  * Based on the existing implementation in the codebase
  */
-export function estimateTokenCount(messages: Array<any>): TokenCount {
+export function estimateTokenCount(messages: Array<unknown>): TokenCount {
   if (!Array.isArray(messages)) {
     return {
       estimated_prompt_tokens: 0,
@@ -93,7 +120,8 @@ export function estimateTokenCount(messages: Array<any>): TokenCount {
   let totalTokens = 0
   const messageCount = messages.length
 
-  for (const message of messages) {
+  for (const msg of messages) {
+    const message = msg as Message
     if (message && typeof message === "object") {
       // Count tokens in content
       if (message.content) {
@@ -146,7 +174,7 @@ export function estimateTokenCount(messages: Array<any>): TokenCount {
 /**
  * Safely parses JSON, returns null if invalid
  */
-export function safeJsonParse(str: string): any {
+export function safeJsonParse(str: string): unknown {
   try {
     return JSON.parse(str)
   } catch {
@@ -157,7 +185,7 @@ export function safeJsonParse(str: string): any {
 /**
  * Safely stringifies JSON with fallback
  */
-export function safeJsonStringify(obj: any, space?: number): string {
+export function safeJsonStringify(obj: unknown, space?: number): string {
   try {
     return JSON.stringify(obj, null, space)
   } catch {
@@ -179,7 +207,7 @@ export function truncateText(text: string, maxLength: number): string {
  * Determines if a URL should be traced based on endpoint patterns
  */
 export function shouldTraceRequest(url: string, includeAll = false): boolean {
-  const urlString = typeof url === "string" ? url : url.toString()
+  const urlString = typeof url === "string" ? url : String(url)
 
   if (includeAll) {
     return urlString.includes("api.github") || urlString.includes("copilot") || urlString.includes("anthropic.com")
@@ -226,12 +254,13 @@ export function createTimestampedFilename(prefix: string, extension: string): st
 /**
  * Validates that an object has required properties
  */
-export function validateRequiredProperties(obj: any, properties: Array<string>): boolean {
+export function validateRequiredProperties(obj: unknown, properties: Array<string>): boolean {
   if (!obj || typeof obj !== "object") {
     return false
   }
 
-  return properties.every(prop => obj.hasOwnProperty(prop))
+  const objectWithProps = obj as Record<string, unknown>
+  return properties.every(prop => Object.prototype.hasOwnProperty.call(objectWithProps, prop))
 }
 
 /**
@@ -250,14 +279,14 @@ export function deepClone<T>(obj: T): T {
     return obj.map(item => deepClone(item)) as T
   }
 
-  const cloned: any = {}
+  const cloned: Record<string, unknown> = {}
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      cloned[key] = deepClone(obj[key])
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = deepClone((obj as Record<string, unknown>)[key])
     }
   }
 
-  return cloned
+  return cloned as T
 }
 
 /**
@@ -265,8 +294,7 @@ export function deepClone<T>(obj: T): T {
  */
 export function getFileSizeInBytes(filePath: string): number {
   try {
-    const fs = require("fs")
-    const stats = fs.statSync(filePath)
+    const stats = statSync(filePath)
     return stats.size
   } catch {
     return 0
@@ -285,8 +313,7 @@ export function bytesToKB(bytes: number): number {
  */
 export function fileExists(filePath: string): boolean {
   try {
-    const fs = require("fs")
-    return fs.existsSync(filePath)
+    return existsSync(filePath)
   } catch {
     return false
   }
