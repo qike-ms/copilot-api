@@ -410,6 +410,45 @@ traces/
 - **Cleanup policy**: Keep last 50 archived files
 - **Atomic operations**: Use temp files and rename for consistency
 
+## Testing Strategy
+
+### Unit Test Coverage Requirements
+- **Target**: >80% code coverage for all tracing modules
+- **Focus Areas**:
+  - Common utilities (header redaction, token counting, ID generation)
+  - Data structure validation and serialization
+  - File rotation logic
+  - Error handling and recovery
+  - Configuration parsing and validation
+
+### Unit Test Structure
+```
+src/lib/tracing/
+├── __tests__/
+│   ├── utils.test.ts           # Common utilities
+│   ├── tracer.test.ts          # Core tracer class  
+│   ├── file-manager.test.ts    # File operations
+│   ├── config.test.ts          # Configuration
+│   └── fixtures/               # Test data
+│       ├── sample-requests.json
+│       ├── sample-responses.json
+│       └── sample-streaming.txt
+```
+
+### E2E Test Scenarios
+1. **Complete OpenAI Flow**: Client request → GitHub API → Response
+2. **Complete Anthropic Flow**: Client request → Translation → GitHub API → Translation → Response  
+3. **Streaming Scenarios**: Both OpenAI and Anthropic streaming
+4. **Error Scenarios**: Failed requests, network errors, malformed responses
+5. **File Rotation**: Log size limits, archive creation
+6. **Configuration**: Different config options and environment variables
+
+### Test Implementation Priority
+1. **Phase 1**: Common utilities with >90% coverage
+2. **Phase 2**: Core tracer functionality with >85% coverage  
+3. **Phase 3**: Integration points with >80% coverage
+4. **Phase 4**: E2E scenarios with key user flows
+
 ## Configuration Options
 
 ```typescript
@@ -454,3 +493,21 @@ This comprehensive approach captures the **complete transformation pipeline** fr
 4. **Error propagation** through the pipeline
 5. **Streaming behavior** and chunk processing
 6. **Authentication flow** and token refresh cycles
+
+
+Todos
+  ⎿  ☒ Analyze request handling and transformation from request to GitHub copilot API in the src code                                                                                   
+     ☒ Study claude-trace package for tracing patterns and best practices at ../trace
+     ☒ Save comprehensive trace plan to docs/trace-plan.md
+     ☒ Document how to save the tuple for each request and response: received request, translated request to GitHub API, received response from GitHub and translated response to return
+     ☒ Design tracing code structure and integration points between current code and tracing system
+     ☒ Define trace json schema and storage under traces/ directory, use log.json for all requests and responses and errors.json for failed ones
+     ☐ Implement common utilities (header redaction, ID generation, token counting)
+     ☐ Write unit tests for common utilities (>90% coverage)
+     ☐ Implement tracing configuration module
+     ☐ Implement core tracer class
+     ☐ Write unit tests for core tracer (>85% coverage)
+     ☐ Integrate tracing into request handlers
+     ☐ Implement file manager with rotation
+     ☐ Write E2E tests for complete flows
+     ☐ Implement auto rotate log data to cap at 100KB size
