@@ -71,24 +71,24 @@ traces/                          # Default trace directory (configurable)
 ```
 
 **File Descriptions:**
-- **`log.json`**: Contains all successful API request-response traces in JSONL format (one JSON object per line)
-- **`errors.json`**: Contains traces that resulted in errors or exceptions
+- **`log.json`**: Contains all successful API request-response traces in JSON array format
+- **`errors.json`**: Contains traces that resulted in errors or exceptions in JSON array format
 - **`metadata.json`**: Stores tracing statistics, configuration snapshot, and file rotation information
 - **`archive/`**: When log files exceed the configured size limit, they are moved here with timestamps
 
 **Reading Trace Files:**
 ```bash
 # View recent successful traces
-tail -n 10 traces/log.json
+cat traces/log.json | jq '.[-10:]'
 
 # View recent errors
-tail -n 10 traces/errors.json
+cat traces/errors.json | jq '.[-10:]'
 
 # View trace statistics
 cat traces/metadata.json | jq
 
 # Search for specific model traces
-grep "gpt-4" traces/log.json | jq
+cat traces/log.json | jq '.[] | select(.githubRequest.model_requested == "gpt-4")'
 ```
 
 ## Configuration Options

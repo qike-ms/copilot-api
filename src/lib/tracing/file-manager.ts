@@ -14,7 +14,7 @@ interface MetadataStats {
 
 interface TraceMetadata {
   stats: MetadataStats
-  config: any
+  config: unknown
   last_updated: string | null
 }
 
@@ -139,12 +139,42 @@ export class TraceFileManager {
   }
 
   /**
-   * Appends data to a file as JSON lines
+   * Appends data to a file as JSON array efficiently
    */
   private async appendToFile(filePath: string, data: unknown): Promise<void> {
     try {
-      const jsonLine = safeJsonStringify(data) + "\n"
-      await fs.appendFile(filePath, jsonLine, "utf8")
+      const jsonEntry = safeJsonStringify(data)
+
+      if (!existsSync(filePath)) {
+        // New file - create array with first entry
+        await fs.writeFile(filePath, `[${jsonEntry}]`, "utf8")
+      } else {
+        // Existing file - insert before closing bracket
+        const fd = await fs.open(filePath, "r+")
+        const stats = await fd.stat()
+
+        if (stats.size === 0) {
+          // Empty file
+          await fd.writeFile(`[${jsonEntry}]`)
+        } else {
+          // Find the last ']' and replace with ',entry]'
+          const buffer = Buffer.alloc(10)
+          await fd.read(buffer, 0, 10, Math.max(0, stats.size - 10))
+
+          const tail = buffer.toString().slice(-10)
+          const lastBracketPos = tail.lastIndexOf("]")
+
+          if (lastBracketPos !== -1) {
+            const seekPos = stats.size - (10 - lastBracketPos)
+            await fd.write(`,${jsonEntry}]`, seekPos)
+          } else {
+            // Fallback: treat as corrupted and restart
+            await fd.writeFile(`[${jsonEntry}]`)
+          }
+        }
+
+        await fd.close()
+      }
     } catch (error) {
       console.error(`Failed to append to ${filePath}:`, error)
     }
@@ -237,9 +267,9 @@ export class TraceFileManager {
       }
 
       // Initialize counters
-      metadata.stats = metadata.stats ?? { traces_written: 0, errors_written: 0 }
-      metadata.stats.traces_written = metadata.stats.traces_written ?? 0
-      metadata.stats.errors_written = metadata.stats.errors_written ?? 0
+      metadata.stats = metadata.stats || { traces_written: 0, errors_written: 0 }
+      metadata.stats.traces_written = metadata.stats.traces_written || 0
+      metadata.stats.errors_written = metadata.stats.errors_written || 0
 
       // Update counter
       metadata.stats[operation]++
@@ -263,20 +293,30 @@ export class TraceFileManager {
 
       if (existsSync(logPath)) {
         const content = await fs.readFile(logPath, "utf8")
-        const lines = content
-          .trim()
-          .split("\n")
-          .filter(line => line.trim())
+        const trimmedContent = content.trim()
 
-        // Apply offset and limit
-        const selectedLines = lines.slice(offset, offset + limit)
-
-        for (const line of selectedLines) {
+        if (trimmedContent) {
           try {
-            const trace = JSON.parse(line) as CopilotTraceTuple
-            traces.push(trace)
-          } catch {
-            // Skip invalid JSON lines
+            const allTraces = JSON.parse(trimmedContent) as Array<CopilotTraceTuple>
+            if (Array.isArray(allTraces)) {
+              // Apply offset and limit
+              const selectedTraces = allTraces.slice(offset, offset + limit)
+              traces.push(...selectedTraces)
+            }
+          } catch (_parseError) {
+            // Fallback: try parsing as JSONL for backward compatibility
+            const lines = trimmedContent.split("\n").filter(line => line.trim())
+
+            const selectedLines = lines.slice(offset, offset + limit)
+
+            for (const line of selectedLines) {
+              try {
+                const trace = JSON.parse(line) as CopilotTraceTuple
+                traces.push(trace)
+              } catch {
+                // Skip invalid JSON lines
+              }
+            }
           }
         }
       }
@@ -298,19 +338,30 @@ export class TraceFileManager {
 
       if (existsSync(errorPath)) {
         const content = await fs.readFile(errorPath, "utf8")
-        const lines = content
-          .trim()
-          .split("\n")
-          .filter(line => line.trim())
+        const trimmedContent = content.trim()
 
-        const selectedLines = lines.slice(offset, offset + limit)
-
-        for (const line of selectedLines) {
+        if (trimmedContent) {
           try {
-            const error = JSON.parse(line) as Partial<CopilotTraceTuple> & { error: TraceError }
-            errors.push(error)
-          } catch {
-            // Skip invalid JSON lines
+            const allErrors = JSON.parse(trimmedContent) as Array<Partial<CopilotTraceTuple> & { error: TraceError }>
+            if (Array.isArray(allErrors)) {
+              // Apply offset and limit
+              const selectedErrors = allErrors.slice(offset, offset + limit)
+              errors.push(...selectedErrors)
+            }
+          } catch (_parseError) {
+            // Fallback: try parsing as JSONL for backward compatibility
+            const lines = trimmedContent.split("\n").filter(line => line.trim())
+
+            const selectedLines = lines.slice(offset, offset + limit)
+
+            for (const line of selectedLines) {
+              try {
+                const error = JSON.parse(line) as Partial<CopilotTraceTuple> & { error: TraceError }
+                errors.push(error)
+              } catch {
+                // Skip invalid JSON lines
+              }
+            }
           }
         }
       }
