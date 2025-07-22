@@ -19,6 +19,7 @@ A reverse-engineered proxy for the GitHub Copilot API that exposes it as an Open
 
 - **OpenAI & Anthropic Compatibility**: Exposes GitHub Copilot as an OpenAI-compatible (`/v1/chat/completions`, `/v1/models`, `/v1/embeddings`) and Anthropic-compatible (`/v1/messages`) API.
 - **Claude Code Integration**: Easily configure and launch [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) to use Copilot as its backend with a simple command-line flag (`--claude-code`).
+- **Comprehensive Tracing**: Built-in request-response tracing system to capture, analyze, and debug API interactions with configurable storage and real-time management endpoints.
 - **Usage Dashboard**: A web-based dashboard to monitor your Copilot API usage, view quotas, and see detailed statistics.
 - **Rate Limit Control**: Manage API usage with rate-limiting options (`--rate-limit`) and a waiting mechanism (`--wait`) to prevent errors from rapid requests.
 - **Manual Request Approval**: Manually approve or deny each API request for fine-grained control over usage (`--manual`).
@@ -146,6 +147,21 @@ New endpoints for monitoring your Copilot usage and quotas.
 | `GET /usage`               | `GET`  | Get detailed Copilot usage statistics and quota information. |
 | `GET /token`               | `GET`  | Get the current Copilot token being used by the API.     |
 
+### Tracing Endpoints
+
+Monitor and manage API request-response flows for debugging and analysis.
+
+| Endpoint                    | Method | Description                                               |
+| --------------------------- | ------ | --------------------------------------------------------- |
+| `GET /traces`              | `GET`  | List recent API traces with pagination support.          |
+| `GET /traces/stats`        | `GET`  | Get trace statistics and counts.                          |
+| `GET /traces/errors`       | `GET`  | List error traces only.                                   |
+| `GET /traces/search`       | `GET`  | Search traces by model, endpoint type, or other criteria. |
+| `DELETE /traces`           | `DELETE` | Clear all traces (development only).                   |
+| `GET /trace-config`        | `GET`  | Get current trace configuration settings.                 |
+| `PUT /trace-config`        | `PUT`  | Update trace configuration in real-time.                  |
+| `POST /trace-config/reset` | `POST` | Reset trace configuration to defaults.                    |
+
 ## Example Usage
 
 Using with npx:
@@ -202,6 +218,70 @@ The dashboard provides a user-friendly interface to view your Copilot usage data
 -   **Detailed Information**: See the full JSON response from the API for a detailed breakdown of all available usage statistics.
 -   **URL-based Configuration**: You can also specify the API endpoint directly in the URL using a query parameter. This is useful for bookmarks or sharing links. For example:
     `https://ericc-ch.github.io/copilot-api?endpoint=http://your-api-server/usage`
+
+## Using the Tracing System
+
+The Copilot API includes a comprehensive tracing system that captures all API requests and responses for debugging and analysis. Traces are stored in JSON array format and can be managed through both API endpoints and direct file access.
+
+### Trace Configuration
+
+The tracing system is enabled by default and stores traces in the `traces/` directory. Configuration can be managed via the `/trace-config` endpoints:
+
+```sh
+# Get current trace configuration
+curl http://localhost:4141/trace-config
+
+# Update configuration
+curl -X PUT http://localhost:4141/trace-config \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true, "maxLogSizeKB": 200, "logLevel": "debug"}'
+
+# Reset to defaults
+curl -X POST http://localhost:4141/trace-config/reset
+```
+
+### Viewing Traces
+
+Traces can be accessed through API endpoints or by reading the JSON files directly:
+
+**Via API endpoints:**
+```sh
+# List recent traces
+curl http://localhost:4141/traces
+
+# Get trace statistics
+curl http://localhost:4141/traces/stats
+
+# View only error traces
+curl http://localhost:4141/traces/errors
+
+# Search traces by criteria
+curl "http://localhost:4141/traces/search?model=gpt-4&endpoint=chat"
+```
+
+**Direct file access:**
+```sh
+# View recent traces (JSON array format)
+cat traces/log.json | jq '.[-10:]'
+
+# Search for specific model usage
+cat traces/log.json | jq '.[] | select(.model == "gpt-4")'
+
+# Filter by endpoint type
+cat traces/log.json | jq '.[] | select(.endpoint_type == "chat_completions")'
+```
+
+### Trace Management
+
+```sh
+# Clear all traces (development only)
+curl -X DELETE http://localhost:4141/traces
+
+# Monitor trace statistics
+curl http://localhost:4141/traces/stats
+```
+
+The system automatically manages file rotation and archiving based on the configured size limits and archive settings.
 
 ## Using with Claude Code
 

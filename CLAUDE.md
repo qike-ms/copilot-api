@@ -42,6 +42,18 @@ See `docs/auth.md` for complete authentication documentation.
 - **Anthropic-compatible**:
   - `POST /v1/messages`
   - `POST /v1/messages/count_tokens`
+- **Usage monitoring**:
+  - `GET /usage` - Copilot usage statistics and quota information
+  - `GET /token` - Current Copilot token information
+- **Tracing system**:
+  - `GET /traces` - List recent API traces with pagination
+  - `GET /traces/stats` - Trace statistics and counts
+  - `GET /traces/errors` - Error traces only
+  - `GET /traces/search` - Search traces by criteria
+  - `DELETE /traces` - Clear all traces (development only)
+  - `GET /trace-config` - Current trace configuration
+  - `PUT /trace-config` - Update trace configuration
+  - `POST /trace-config/reset` - Reset trace configuration to defaults
 
 ## Model Discovery System
 
@@ -62,6 +74,20 @@ Comprehensive request/response logging available via `--verbose` flag:
 - OAuth token exchange and refresh cycles
 - Rate limiting and system events
 - See `docs/logging.md` for complete logging reference
+
+## Tracing System
+
+Comprehensive API request-response tracing for debugging and analysis:
+
+1. **File Management** (`src/lib/tracing/file-manager.ts:5-15`): Handles trace storage in JSON array format with automatic file rotation and archiving
+2. **Tracer Implementation** (`src/lib/tracing/tracer.ts:10-20`): Core tracing logic that captures requests, responses, and metadata for all API endpoints
+3. **Route Handlers** (`src/routes/traces/handlers.ts:8-25`): API endpoints for trace management including listing, searching, and configuration
+4. **Configuration Management** (`src/routes/trace-config/handlers.ts:5-12`): Real-time trace configuration updates and reset functionality
+5. **Integration Points**: Tracing is integrated into chat completions (`src/routes/chat-completions/handler.ts:45-50`) and messages handlers (`src/routes/messages/handler.ts:35-40`)
+
+Traces are stored in `traces/log.json` as JSON arrays and can be accessed via API endpoints or direct file reading. The system supports configurable storage limits, automatic archiving, and real-time configuration updates.
+
+See `docs/trace-quick-guide.md` for complete tracing documentation.
 
 ## Other Notes
 
