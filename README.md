@@ -35,6 +35,11 @@ https://github.com/user-attachments/assets/7654b383-669d-4eb9-b23c-06d7aefee8c5
 - Bun (>= 1.2.x)
 - GitHub account with Copilot subscription (individual, business, or enterprise)
 
+## Run
+```sh
+bun run start start
+```
+
 ## Installation
 
 To install dependencies, run:
