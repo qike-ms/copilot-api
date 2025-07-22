@@ -4,7 +4,9 @@
 
 import type { Context } from "hono"
 
-import { getTracingConfig } from "~/lib/tracing/config"
+import type { TracingConfig } from "~/lib/tracing/types"
+
+import { getTracingConfig, updateTracingConfig } from "~/lib/tracing/config"
 import { TraceFileManager } from "~/lib/tracing/file-manager"
 
 const fileManager = new TraceFileManager()
@@ -253,7 +255,7 @@ export async function clearTraces(c: Context) {
       last_updated: new Date().toISOString(),
       cleared_at: new Date().toISOString(),
     }
-    const stringifiedMetadata = JSON.stringify.bind(null);
+    const stringifiedMetadata = JSON.stringify.bind(null)
     await fs.writeFile(metadataPath, stringifiedMetadata(newMetadata, null, 2), "utf8").catch(() => {
       // Ignore file write errors
     })
@@ -262,5 +264,148 @@ export async function clearTraces(c: Context) {
   } catch (error) {
     console.error("Failed to clear traces:", error)
     return c.json({ error: "Failed to clear traces" }, 500)
+  }
+}
+
+/**
+ * GET /traces/config - Get current trace configuration
+ */
+export function getTraceConfig(c: Context) {
+  try {
+    const config = getTracingConfig()
+
+    return c.json({
+      config,
+      environment_variables: {
+        COPILOT_TRACE_ENABLED: process.env.COPILOT_TRACE_ENABLED,
+        COPILOT_TRACE_DIR: process.env.COPILOT_TRACE_DIR,
+        COPILOT_TRACE_MAX_SIZE: process.env.COPILOT_TRACE_MAX_SIZE,
+        COPILOT_TRACE_MAX_ARCHIVES: process.env.COPILOT_TRACE_MAX_ARCHIVES,
+        COPILOT_TRACE_REDACT_HEADERS: process.env.COPILOT_TRACE_REDACT_HEADERS,
+        COPILOT_TRACE_STREAMING: process.env.COPILOT_TRACE_STREAMING,
+        COPILOT_TRACE_LOG_LEVEL: process.env.COPILOT_TRACE_LOG_LEVEL,
+      },
+    })
+  } catch (error) {
+    console.error("Failed to get trace configuration:", error)
+    return c.json({ error: "Failed to get trace configuration" }, 500)
+  }
+}
+
+/**
+ * Validates trace configuration parameters
+ */
+function validateTraceConfig(updates: Partial<TracingConfig>): { valid: boolean; errors: Array<string> } {
+  const errors: Array<string> = []
+
+  if (updates.enabled !== undefined && typeof updates.enabled !== "boolean") {
+    errors.push("enabled must be a boolean")
+  }
+
+  if (updates.logDirectory !== undefined) {
+    if (typeof updates.logDirectory !== "string" || updates.logDirectory.trim() === "") {
+      errors.push("logDirectory must be a non-empty string")
+    }
+  }
+
+  if (updates.maxLogSizeKB !== undefined) {
+    if (!Number.isInteger(updates.maxLogSizeKB) || updates.maxLogSizeKB < 1) {
+      errors.push("maxLogSizeKB must be a positive integer")
+    }
+  }
+
+  if (updates.maxArchiveFiles !== undefined) {
+    if (!Number.isInteger(updates.maxArchiveFiles) || updates.maxArchiveFiles < 1) {
+      errors.push("maxArchiveFiles must be a positive integer")
+    }
+  }
+
+  if (updates.redactHeaders !== undefined && typeof updates.redactHeaders !== "boolean") {
+    errors.push("redactHeaders must be a boolean")
+  }
+
+  if (updates.includeStreamingChunks !== undefined && typeof updates.includeStreamingChunks !== "boolean") {
+    errors.push("includeStreamingChunks must be a boolean")
+  }
+
+  if (updates.logLevel !== undefined) {
+    const validLevels = ["debug", "info", "warn", "error"]
+    if (!validLevels.includes(updates.logLevel)) {
+      errors.push(`logLevel must be one of: ${validLevels.join(", ")}`)
+    }
+  }
+
+  return { valid: errors.length === 0, errors }
+}
+
+/**
+ * PUT /traces/config - Update trace configuration
+ */
+export async function updateTraceConfig(c: Context) {
+  try {
+    const body = await c.req.json().catch(() => ({}))
+    const updates = body as Partial<TracingConfig>
+    
+    if (!body || typeof body !== 'object') {
+      return c.json({ error: "Invalid JSON body" }, 400)
+    }
+
+    // Validate the configuration
+    const validation = validateTraceConfig(updates)
+    if (!validation.valid) {
+      return c.json({ error: "Invalid configuration", details: validation.errors }, 400)
+    }
+
+    // Get current config for comparison
+    const currentConfig = getTracingConfig()
+
+    // Update the configuration
+    updateTracingConfig(updates)
+
+    // Get the new configuration
+    const newConfig = getTracingConfig()
+
+    return c.json({
+      message: "Configuration updated successfully",
+      previous: currentConfig,
+      current: newConfig,
+      changes: Object.keys(updates),
+    })
+  } catch (error) {
+    console.error("Failed to update trace configuration:", error)
+    return c.json({ error: "Failed to update trace configuration" }, 500)
+  }
+}
+
+/**
+ * POST /traces/config/reset - Reset trace configuration to defaults
+ */
+export async function resetTraceConfig(c: Context) {
+  try {
+    const currentConfig = getTracingConfig()
+
+    // Reset to defaults by clearing environment variables
+    delete process.env.COPILOT_TRACE_ENABLED
+    delete process.env.COPILOT_TRACE_DIR
+    delete process.env.COPILOT_TRACE_MAX_SIZE
+    delete process.env.COPILOT_TRACE_MAX_ARCHIVES
+    delete process.env.COPILOT_TRACE_REDACT_HEADERS
+    delete process.env.COPILOT_TRACE_STREAMING
+    delete process.env.COPILOT_TRACE_LOG_LEVEL
+
+    // Force config refresh by importing the reset function
+    const { resetConfigCache } = await import("~/lib/tracing/config")
+    resetConfigCache()
+
+    const newConfig = getTracingConfig()
+
+    return c.json({
+      message: "Configuration reset to defaults",
+      previous: currentConfig,
+      current: newConfig,
+    })
+  } catch (error) {
+    console.error("Failed to reset trace configuration:", error)
+    return c.json({ error: "Failed to reset trace configuration" }, 500)
   }
 }

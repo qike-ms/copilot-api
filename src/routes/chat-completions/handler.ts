@@ -18,14 +18,16 @@ import {
 export async function handleCompletion(c: Context) {
   const tracer = getTracer()
   const startTime = Date.now() / 1000
-
-  // Capture initial client request
-  const traceId = await tracer.captureClientRequest(c.req, "openai_chat")
+  let traceId: string | undefined
 
   try {
     await checkRateLimit(state)
 
     let payload = await c.req.json<ChatCompletionsPayload>()
+
+    // Capture initial client request with parsed body
+    traceId = await tracer.captureClientRequest(c.req, "openai_chat", payload)
+
     consola.debug("Request payload:", JSON.stringify(payload).slice(-400))
 
     consola.info("Current token count:", getTokenCount(payload.messages))
@@ -82,12 +84,16 @@ export async function handleCompletion(c: Context) {
           }
         }
       } catch (error) {
-        await tracer.logError(traceId, "response_translation", error)
+        if (traceId) {
+          await tracer.logError(traceId, "response_translation", error)
+        }
         throw error
       }
     })
   } catch (error) {
-    await tracer.logError(traceId, "client_parse", error)
+    if (traceId) {
+      await tracer.logError(traceId, "client_parse", error)
+    }
     throw error
   }
 }

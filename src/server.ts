@@ -7,6 +7,7 @@ import { embeddingRoutes } from "./routes/embeddings/route"
 import { messageRoutes } from "./routes/messages/route"
 import { modelRoutes } from "./routes/models/route"
 import { tokenRoute } from "./routes/token/route"
+import { traceConfigRoute } from "./routes/trace-config/route"
 import { tracesRoute } from "./routes/traces/route"
 import { usageRoute } from "./routes/usage/route"
 
@@ -22,6 +23,7 @@ server.route("/models", modelRoutes)
 server.route("/embeddings", embeddingRoutes)
 server.route("/usage", usageRoute)
 server.route("/token", tokenRoute)
+server.route("/trace-config", traceConfigRoute)
 server.route("/traces", tracesRoute)
 
 // Compatibility with tools that expect v1/ prefix

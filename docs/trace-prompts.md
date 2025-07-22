@@ -5,4 +5,7 @@
      ☐ Design tracing code structure and integration points between current code and tracing system
      ☐ Define trace json schema and storage under traces/ directory, use log.json for all requests and responses and errors.json for failed ones. Include current logging text in the trace data, aside from req and responses.
      * auto rotate log data to cap at 100KB size.
+
+
+## Allow dynamically change trace settings instead of at startup time
  

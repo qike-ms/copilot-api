@@ -20,14 +20,16 @@ import { translateChunkToAnthropicEvents } from "./stream-translation"
 export async function handleCompletion(c: Context) {
   const tracer = getTracer()
   const startTime = Date.now() / 1000
-
-  // Capture initial Anthropic request
-  const traceId = await tracer.captureClientRequest(c.req, "anthropic_messages")
+  let traceId: string | undefined
 
   try {
     await checkRateLimit(state)
 
     const anthropicPayload = await c.req.json<AnthropicMessagesPayload>()
+
+    // Capture initial Anthropic request with parsed body
+    traceId = await tracer.captureClientRequest(c.req, "anthropic_messages", anthropicPayload)
+
     consola.debug("Anthropic request payload:", JSON.stringify(anthropicPayload))
 
     const openAIPayload = translateToOpenAI(anthropicPayload)
@@ -89,12 +91,16 @@ export async function handleCompletion(c: Context) {
         // Finalize streaming trace with collected events
         await tracer.captureClientResponse(traceId, { events: anthropicEvents }, startTime, "anthropic")
       } catch (error) {
-        await tracer.logError(traceId, "response_translation", error)
+        if (traceId) {
+          await tracer.logError(traceId, "response_translation", error)
+        }
         throw error
       }
     })
   } catch (error) {
-    await tracer.logError(traceId, "translation", error)
+    if (traceId) {
+      await tracer.logError(traceId, "translation", error)
+    }
     throw error
   }
 }

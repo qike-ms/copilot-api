@@ -39,24 +39,51 @@ export class CopilotTracer {
   /**
    * Captures initial client request
    */
-  async captureClientRequest(req: Request, endpointType: string, parsedBody?: any): Promise<string> {
+  async captureClientRequest(req: any, endpointType: string, parsedBody?: any): Promise<string> {
     if (!this.config.enabled) return generateTraceId()
 
     const traceId = generateTraceId()
     const timestamp = getCurrentTimestamp()
 
     try {
-      // Extract headers
+      // Extract headers - handle both Hono request and standard Request objects
       const headers: Record<string, string> = {}
-      req.headers.forEach((value, key) => {
-        headers[key] = value
-      })
+      
+      if (req.raw && req.raw instanceof Request) {
+        // Hono request with raw property
+        req.raw.headers.forEach((value: string, key: string) => {
+          headers[key] = value
+        })
+      } else if (req.headers && typeof req.headers.forEach === 'function') {
+        // Standard Request object
+        req.headers.forEach((value: string, key: string) => {
+          headers[key] = value
+        })
+      } else if (req.header && typeof req.header === 'function') {
+        // Hono request - get common headers manually
+        const commonHeaders = [
+          'authorization', 'content-type', 'user-agent', 'accept',
+          'x-session-id', 'x-user-id', 'x-request-id'
+        ]
+        for (const headerName of commonHeaders) {
+          const value = req.header(headerName)
+          if (value) {
+            headers[headerName] = value
+          }
+        }
+      }
 
       // Get request body
       let body = parsedBody
-      if (!body) {
+      if (!body && req.json && typeof req.json === 'function') {
         try {
-          body = await req.clone().json()
+          body = await req.json()
+        } catch {
+          body = null
+        }
+      } else if (!body && req.raw && req.raw.clone) {
+        try {
+          body = await req.raw.clone().json()
         } catch {
           body = null
         }
@@ -67,8 +94,8 @@ export class CopilotTracer {
 
       const clientRequest: ClientRequest = {
         timestamp,
-        method: req.method,
-        url: req.url,
+        method: req.method || req.raw?.method || 'POST',
+        url: req.url || req.raw?.url || 'unknown',
         headers: this.config.redactHeaders ? redactSensitiveHeaders(headers) : headers,
         body: this.config.redactHeaders ? this.redactSensitiveBodyData(body) : body,
         endpoint_type: endpointType as any,

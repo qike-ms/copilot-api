@@ -4,7 +4,17 @@
 
 import { Hono } from "hono"
 
-import { getTraces, getTraceErrors, getTraceStats, searchTraces, getTraceById, clearTraces } from "./handlers"
+import {
+  getTraces,
+  getTraceErrors,
+  getTraceStats,
+  searchTraces,
+  getTraceById,
+  clearTraces,
+  getTraceConfig,
+  updateTraceConfig,
+  resetTraceConfig,
+} from "./handlers"
 
 export const tracesRoute = new Hono()
 
@@ -25,3 +35,12 @@ tracesRoute.get("/:traceId", getTraceById)
 
 // DELETE /traces - Clear all traces (dev/testing only)
 tracesRoute.delete("/", clearTraces)
+
+// GET /traces/config - Get current trace configuration
+tracesRoute.get("/config", getTraceConfig)
+
+// PUT /traces/config - Update trace configuration
+tracesRoute.put("/config", updateTraceConfig)
+
+// POST /traces/config/reset - Reset trace configuration to defaults
+tracesRoute.post("/config/reset", resetTraceConfig)
