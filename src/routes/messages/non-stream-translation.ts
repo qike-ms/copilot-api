@@ -50,7 +50,40 @@ function translateAnthropicMessagesToOpenAI(
     message.role === "user" ? handleUserMessage(message) : handleAssistantMessage(message),
   )
 
-  return [...systemMessages, ...otherMessages]
+  // Ensure tool_result messages immediately follow tool_use messages
+  const reorderedMessages = reorderToolMessages([...systemMessages, ...otherMessages])
+
+  return reorderedMessages
+}
+
+function reorderToolMessages(messages: Array<Message>): Array<Message> {
+  const result: Array<Message> = []
+  let pendingToolResults: Array<Message> = []
+
+  for (const message of messages) {
+    if (message.role === "tool") {
+      // This is a tool result, add it to pending
+      pendingToolResults.push(message)
+    } else if (message.role === "assistant" && message.tool_calls) {
+      // This is an assistant message with tool calls
+      result.push(message)
+      // Immediately add any pending tool results that match these tool calls
+      const toolCallIds = new Set(message.tool_calls.map(tc => tc.id))
+      const matchingResults = pendingToolResults.filter(tr => tr.tool_call_id && toolCallIds.has(tr.tool_call_id))
+      const remainingResults = pendingToolResults.filter(tr => !tr.tool_call_id || !toolCallIds.has(tr.tool_call_id))
+
+      result.push(...matchingResults)
+      pendingToolResults = remainingResults
+    } else {
+      // Regular message
+      result.push(message)
+    }
+  }
+
+  // Add any remaining tool results at the end (shouldn't happen in well-formed conversations)
+  result.push(...pendingToolResults)
+
+  return result
 }
 
 function handleSystemPrompt(system: string | Array<AnthropicTextBlock> | undefined): Array<Message> {
