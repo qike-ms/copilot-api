@@ -62,48 +62,6 @@ export function calculateProcessingTime(startTime: number, endTime: number): num
   return (endTime - startTime) * 1000 // Convert from seconds to milliseconds
 }
 
-/**
- * Redacts sensitive information from headers
- */
-export function redactSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
-  const redactedHeaders = { ...headers }
-
-  const sensitiveKeys = [
-    "authorization",
-    "x-api-key",
-    "x-auth-token",
-    "x-github-token",
-    "x-copilot-token",
-    "cookie",
-    "set-cookie",
-    "x-session-token",
-    "x-access-token",
-    "bearer",
-    "proxy-authorization",
-  ]
-
-  for (const [key, value] of Object.entries(redactedHeaders)) {
-    const lowerKey = key.toLowerCase()
-
-    if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
-      if (value && typeof value === "string") {
-        if (value.length > 14) {
-          // Keep first 10 chars and last 4 chars, redact middle
-          redactedHeaders[key] = `${value.substring(0, 10)}...${value.slice(-4)}`
-        } else if (value.length > 4) {
-          // Keep first 2 and last 2 chars
-          redactedHeaders[key] = `${value.substring(0, 2)}...${value.slice(-2)}`
-        } else {
-          redactedHeaders[key] = "[REDACTED]"
-        }
-      } else {
-        redactedHeaders[key] = "[REDACTED]"
-      }
-    }
-  }
-
-  return redactedHeaders
-}
 
 /**
  * Estimates token count from messages (simplified version of existing getTokenCount)

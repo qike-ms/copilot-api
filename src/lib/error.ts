@@ -2,6 +2,7 @@ import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 
 import consola from "consola"
+import { getCallerLocation } from "./logger"
 
 export class HTTPError extends Error {
   response: Response
@@ -13,12 +14,11 @@ export class HTTPError extends Error {
 }
 
 export async function forwardError(c: Context, error: unknown) {
-  consola.error("Error occurred:", error)
 
   if (error instanceof HTTPError) {
     try {
       const errorData = await error.response.clone().json()
-      consola.error("HTTP error:", errorData)
+      consola.error(`[${getCallerLocation()}] HTTP error:`, errorData)
       return c.json(
         {
           error: errorData,
@@ -28,7 +28,7 @@ export async function forwardError(c: Context, error: unknown) {
     } catch {
       // If JSON parsing fails, try to read as text
       const errorText = await error.response.clone().text()
-      consola.error("HTTP error (text):", errorText)
+      consola.error(`[${getCallerLocation()}] HTTP error (text):`, errorText)
       return c.json(
         {
           error: {
@@ -41,6 +41,7 @@ export async function forwardError(c: Context, error: unknown) {
     }
   }
 
+  consola.error(`[${getCallerLocation()}] Error occurred:\n`, (error as Error).message)
   return c.json(
     {
       error: {

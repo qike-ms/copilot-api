@@ -10,7 +10,7 @@ import type { TracingConfig } from "./types"
 const DEFAULT_CONFIG: TracingConfig = {
   enabled: false,
   logDirectory: "traces/",
-  maxLogSizeKB: 100,
+  maxLogSizeKB: 1000,
   maxArchiveFiles: 50,
   redactHeaders: true,
   includeStreamingChunks: false,

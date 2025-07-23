@@ -25,7 +25,7 @@ describe("Tracing Configuration", () => {
 
       expect(config.enabled).toBe(false)
       expect(config.logDirectory).toBe("traces/")
-      expect(config.maxLogSizeKB).toBe(100)
+      expect(config.maxLogSizeKB).toBe(1000)
       expect(config.maxArchiveFiles).toBe(50)
       expect(config.redactHeaders).toBe(true)
       expect(config.includeStreamingChunks).toBe(false)

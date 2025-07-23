@@ -82,11 +82,15 @@ export class TraceFileManager {
   /**
    * Writes an error trace to error log
    */
-  writeError(error: TraceError & { trace_id?: string; timestamp?: number }): void {
+  writeError(error: TraceError & { trace_id?: string; timestamp?: number }, traceId?: string): void {
     if (!this.config.enabled) return
 
+    // Get the active trace to include request data if available
+    const tracer = this.getTracerInstance()
+    const activeTrace = traceId && tracer ? tracer.activeTraces?.get(traceId) : null
+
     const errorTrace: Partial<CopilotTraceTuple> & { error: TraceError } = {
-      trace_id: error.trace_id ?? "unknown",
+      trace_id: error.trace_id ?? traceId ?? "unknown",
       logged_at: getCurrentISOTimestamp(),
       error: {
         stage: error.stage,
@@ -95,6 +99,10 @@ export class TraceFileManager {
         status: error.status,
         type: error.type,
       },
+      // Include request data if available
+      ...(activeTrace?.clientRequest && { clientRequest: activeTrace.clientRequest }),
+      ...(activeTrace?.githubRequest && { githubRequest: activeTrace.githubRequest }),
+      ...(activeTrace?.githubResponse && { githubResponse: activeTrace.githubResponse }),
     }
 
     const writeOp = async () => {
@@ -104,6 +112,20 @@ export class TraceFileManager {
     }
 
     this.queueWrite(writeOp)
+  }
+
+  /**
+   * Gets the tracer instance (for accessing active traces)
+   */
+  private getTracerInstance(): { activeTraces: Map<string, Partial<CopilotTraceTuple>> } | null {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getTracer } = require("./tracer")
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return getTracer()
+    } catch {
+      return null
+    }
   }
 
   /**
@@ -267,9 +289,9 @@ export class TraceFileManager {
       }
 
       // Initialize counters
-      metadata.stats = metadata.stats || { traces_written: 0, errors_written: 0 }
-      metadata.stats.traces_written = metadata.stats.traces_written || 0
-      metadata.stats.errors_written = metadata.stats.errors_written || 0
+      metadata.stats = metadata.stats ?? { traces_written: 0, errors_written: 0 }
+      metadata.stats.traces_written = metadata.stats.traces_written ?? 0
+      metadata.stats.errors_written = metadata.stats.errors_written ?? 0
 
       // Update counter
       metadata.stats[operation]++

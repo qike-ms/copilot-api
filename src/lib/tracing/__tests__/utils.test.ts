@@ -7,7 +7,6 @@ import { describe, it, expect } from "bun:test"
 import {
   generateTraceId,
   generateSessionId,
-  redactSensitiveHeaders,
   estimateTokenCount,
   getCurrentTimestamp,
   getCurrentISOTimestamp,
@@ -44,35 +43,6 @@ describe("Tracing Utils", () => {
     })
   })
 
-  describe("Header Redaction", () => {
-    it("should redact sensitive headers", () => {
-      const headers = {
-        "authorization": "Bearer token123456789012345",
-        "x-api-key": "key123456789",
-        "content-type": "application/json",
-        "user-agent": "test-agent",
-      }
-
-      const redacted = redactSensitiveHeaders(headers)
-
-      expect(redacted.authorization).toBe("Bearer tok...2345")
-      expect(redacted["x-api-key"]).toBe("ke...89")
-      expect(redacted["content-type"]).toBe("application/json")
-      expect(redacted["user-agent"]).toBe("test-agent")
-    })
-
-    it("should handle short sensitive values", () => {
-      const headers = {
-        "authorization": "abc",
-        "x-api-key": "key12",
-      }
-
-      const redacted = redactSensitiveHeaders(headers)
-
-      expect(redacted.authorization).toBe("[REDACTED]")
-      expect(redacted["x-api-key"]).toBe("ke...12")
-    })
-  })
 
   describe("Token Count Estimation", () => {
     it("should estimate tokens from simple messages", () => {

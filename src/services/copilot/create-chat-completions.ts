@@ -3,6 +3,7 @@ import { events } from "fetch-event-stream"
 
 import { copilotHeaders, copilotBaseUrl } from "~/lib/api-config"
 import { HTTPError } from "~/lib/error"
+import { getCallerLocation } from "~/lib/logger"
 import { state } from "~/lib/state"
 import { getTracer } from "~/lib/tracing"
 
@@ -22,11 +23,14 @@ export const createChatCompletions = async (payload: ChatCompletionsPayload, tra
     await tracer.captureGithubRequest(traceId, payload, url, headers, payload.model, payload.stream ?? false)
   }
 
+  consola.info(`${getCallerLocation()} --> POST ${url}`, { headers, body: JSON.stringify(payload, null, 2) })
+  
   const response = await fetch(url, {
     method: "POST",
     headers,
     body: JSON.stringify(payload),
   })
+  consola.info(`${getCallerLocation()} GitHub Response: \n`, response.headers, response.url, response.status, response.clone())
 
   // Capture GitHub API response for tracing
   if (traceId) {
@@ -34,11 +38,11 @@ export const createChatCompletions = async (payload: ChatCompletionsPayload, tra
   }
 
   if (!response.ok) {
-    consola.error("Failed to create chat completions", response)
+    consola.error(`${getCallerLocation()} Failed to create chat completions \n`, JSON.stringify(await response.clone().json()))
 
-    if (traceId) {
-      await tracer.logError(traceId, "github_api", new HTTPError("Failed to create chat completions", response.clone()))
-    }
+  if (traceId) {
+    await tracer.captureClientResponse(traceId, await response.clone().json(), startTime, "anthropic")
+  }
 
     throw new HTTPError("Failed to create chat completions", response.clone())
   }

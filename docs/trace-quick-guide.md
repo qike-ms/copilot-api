@@ -219,6 +219,37 @@ Each trace file contains a complete request-response cycle:
 }
 ```
 
+### The trace config is loaded lazily when first accessed, not eagerly at server startup. Here's how it works:
+
+  Configuration Loading Flow
+
+  1. Lazy Initialization (src/lib/tracing/config.ts:25-49):
+    - Config is loaded via getTracingConfig() when first requested
+    - Uses a configCache variable to avoid re-reading environment variables
+    - No explicit initialization at startup
+  2. Environment Variable Sources (src/lib/tracing/config.ts:31-37):
+  enabled: process.env.COPILOT_TRACE_ENABLED === "true"
+  logDirectory: process.env.COPILOT_TRACE_DIR ?? "traces/"
+  maxLogSizeKB: process.env.COPILOT_TRACE_MAX_SIZE ?? 100
+  maxArchiveFiles: process.env.COPILOT_TRACE_MAX_ARCHIVES ?? 50
+  redactHeaders: process.env.COPILOT_TRACE_REDACT_HEADERS !== "false"
+  includeStreamingChunks: process.env.COPILOT_TRACE_STREAMING === "true"
+  logLevel: process.env.COPILOT_TRACE_LOG_LEVEL ?? "info"
+  3. First Access Triggers (src/lib/tracing/tracer.ts:30-36):
+    - TraceFileManager and CopilotTracer constructors call getTracingConfig()
+    - This happens when trace endpoints are first used or API requests are traced
+  4. Directory Creation (src/lib/tracing/config.ts:45):
+    - Creates traces/ and traces/archive/ directories when config loads
+    - Only if tracing is enabled
+
+  Key Points:
+
+  - No startup initialization - config loads on first use
+  - Environment variable driven - all settings come from env vars
+  - Cached after first load - subsequent calls return cached config
+  - Runtime updates possible via updateTracingConfig() which clears cache
+
+
 ## Common Use Cases
 
 ### Debug Request Translation

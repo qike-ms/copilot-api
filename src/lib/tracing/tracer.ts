@@ -20,7 +20,6 @@ import {
   generateSessionId,
   getCurrentTimestamp,
   getCurrentISOTimestamp,
-  redactSensitiveHeaders,
   estimateTokenCount,
   calculateProcessingTime,
   deepClone,
@@ -29,7 +28,7 @@ import {
 export class CopilotTracer {
   private config = getTracingConfig()
   private fileManager = new TraceFileManager()
-  private activeTraces = new Map<string, Partial<CopilotTraceTuple>>()
+  public activeTraces = new Map<string, Partial<CopilotTraceTuple>>()
 
   constructor() {
     this.config = getTracingConfig()
@@ -96,8 +95,10 @@ export class CopilotTracer {
         timestamp,
         method: req.method || req.raw?.method || 'POST',
         url: req.url || req.raw?.url || 'unknown',
-        headers: this.config.redactHeaders ? redactSensitiveHeaders(headers) : headers,
-        body: this.config.redactHeaders ? this.redactSensitiveBodyData(body) : body,
+        //headers: this.config.redactHeaders ? this.redactSensitiveHeaders(headers) : headers,
+        //body: this.config.redactHeaders ? this.redactSensitiveBodyData(body) : body,
+        headers: headers,
+        body: body,
         endpoint_type: endpointType as any,
         user_session: this.extractUserSession(headers),
         token_count: tokenCount,
@@ -139,7 +140,7 @@ export class CopilotTracer {
       const githubRequest: GithubRequest = {
         timestamp: getCurrentTimestamp(),
         url,
-        headers: this.config.redactHeaders ? redactSensitiveHeaders(headers) : headers,
+        headers: headers, // this.config.redactHeaders ? this.redactSensitiveHeaders(headers) : headers,
         body: payload,
         model_requested: model,
         streaming,
@@ -185,7 +186,7 @@ export class CopilotTracer {
       const githubResponse: GithubResponse = {
         timestamp: getCurrentTimestamp(),
         status_code: response.status,
-        headers: this.config.redactHeaders ? redactSensitiveHeaders(headers) : headers,
+        headers: headers, // this.config.redactHeaders ? this.redactSensitiveHeaders(headers) : headers,
         body,
         body_raw: bodyRaw,
         token_usage:
@@ -254,7 +255,7 @@ export class CopilotTracer {
       const clientResponse: ClientResponse = {
         timestamp,
         status_code: statusCode,
-        headers: this.config.redactHeaders ? redactSensitiveHeaders(headers) : headers,
+        headers: headers, // this.config.redactHeaders ? this.redactSensitiveHeaders(headers) : headers,
         body,
         body_raw: bodyRaw,
         processing_time_ms: processingTime,
@@ -377,8 +378,11 @@ export class CopilotTracer {
    */
   async logError(traceId: string, stage: string, error: any): Promise<void> {
     if (!this.config.enabled) return
+    const trace = this.activeTraces.get(traceId)
+    if (!trace) return
+    const completedTrace = trace as CopilotTraceTuple
 
-    const traceError: TraceError & { trace_id: string; timestamp: number } = {
+    const traceError: TraceError & { trace_id: string; timestamp: number; trace: CopilotTraceTuple } = {
       trace_id: traceId,
       timestamp: getCurrentTimestamp(),
       stage: stage as any,
@@ -386,9 +390,10 @@ export class CopilotTracer {
       stack: error?.stack,
       status: error?.status,
       type: error?.constructor?.name,
+      trace: completedTrace,
     }
 
-    await this.fileManager.writeError(traceError)
+    this.fileManager.writeError(traceError, traceId)
 
     // Clean up active trace on error
     this.activeTraces.delete(traceId)
@@ -418,6 +423,49 @@ export class CopilotTracer {
     }
 
     return generateSessionId()
+  }
+
+  /**
+   * Redacts sensitive information from headers
+   */
+  private redactSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
+    const redactedHeaders = { ...headers }
+  
+    const sensitiveKeys = [
+      "authorization",
+      "x-api-key",
+      "x-auth-token",
+      "x-github-token",
+      "x-copilot-token",
+      "cookie",
+      "set-cookie",
+      "x-session-token",
+      "x-access-token",
+      "bearer",
+      "proxy-authorization",
+    ]
+  
+    for (const [key, value] of Object.entries(redactedHeaders)) {
+      const lowerKey = key.toLowerCase()
+  
+      if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
+        if (value && typeof value === "string") {
+          if (value.length > 14) {
+            // Keep first 10 chars and last 4 chars, redact middle
+            redactedHeaders[key] = `${value.substring(0, 10)}...${value.slice(-4)}`
+          } else if (value.length > 4) {
+            // Keep first 2 and last 2 chars
+            redactedHeaders[key] = `${value.substring(0, 2)}...${value.slice(-2)}`
+          } else {
+            redactedHeaders[key] = "[REDACTED]"
+          }
+        } else {
+          redactedHeaders[key] = "[REDACTED]"
+        }
+      }
+    }
+  
+    return redactedHeaders
   }
 
   /**
