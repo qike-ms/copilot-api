@@ -87,7 +87,7 @@ export async function handleCompletion(c: Context) {
           const events = translateChunkToAnthropicEvents(chunk, streamState)
 
           for (const event of events) {
-            consola.debug(`${getCallerLocation()} Translated Anthropic event:\n`, JSON.stringify(event))
+            //consola.debug(`${getCallerLocation()} Translated Anthropic event:\n`, JSON.stringify(event))
             anthropicEvents.push(event)
 
             await stream.writeSSE({

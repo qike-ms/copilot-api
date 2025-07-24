@@ -18,6 +18,7 @@ export const createChatCompletions = async (payload: ChatCompletionsPayload, tra
   const url = `${copilotBaseUrl(state)}/chat/completions`
   const headers = copilotHeaders(state, enableVision)
 
+
   // Capture GitHub API request for tracing
   if (traceId) {
     await tracer.captureGithubRequest(traceId, payload, url, headers, payload.model, payload.stream ?? false)
@@ -39,10 +40,6 @@ export const createChatCompletions = async (payload: ChatCompletionsPayload, tra
 
   if (!response.ok) {
     consola.error(`${getCallerLocation()} Failed to create chat completions \n`, JSON.stringify(await response.clone().json()))
-
-  if (traceId) {
-    await tracer.captureClientResponse(traceId, await response.clone().json(), startTime, "anthropic")
-  }
 
     throw new HTTPError("Failed to create chat completions", response.clone())
   }
