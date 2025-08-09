@@ -4,11 +4,7 @@
 
 import { Hono } from "hono"
 
-import {
-  getTraceConfig,
-  updateTraceConfig,
-  resetTraceConfig,
-} from "../traces/handlers"
+import { getTraceConfig, updateTraceConfig, resetTraceConfig } from "../traces/handlers"
 
 export const traceConfigRoute = new Hono()
 

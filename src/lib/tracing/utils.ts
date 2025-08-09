@@ -62,7 +62,6 @@ export function calculateProcessingTime(startTime: number, endTime: number): num
   return (endTime - startTime) * 1000 // Convert from seconds to milliseconds
 }
 
-
 /**
  * Estimates token count from messages (simplified version of existing getTokenCount)
  * Based on the existing implementation in the codebase

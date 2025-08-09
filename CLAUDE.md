@@ -89,25 +89,6 @@ Traces are stored in `traces/log.json` as JSON arrays and can be accessed via AP
 
 See `docs/trace-quick-guide.md` for complete tracing documentation.
 
-## Anthropic Direct Passthrough
-
-The server supports bypassing GitHub Copilot translation and forwarding requests directly to Anthropic's API:
-
-1. **Configuration** (`src/lib/anthropic-config.ts:5-25`): Environment variables control passthrough mode
-2. **Passthrough Service** (`src/services/anthropic/passthrough.ts:10-30`): Direct HTTP forwarding to Anthropic API with header preservation
-3. **Handler Integration** (`src/routes/messages/handler.ts:22-26`): Mode detection routes requests to translation or passthrough
-4. **Tracing Support**: All passthrough requests are captured in the existing tracing system
-
-### Environment Variables
-
-- `ANTHROPIC_PASSTHROUGH_MODE=true` - Enable direct passthrough (default: false)
-- `ANTHROPIC_BASE_URL` - Anthropic API base URL (default: https://api.anthropic.com)
-- `ANTHROPIC_API_KEY` - Required when passthrough mode enabled
-
-When passthrough is enabled, `/v1/messages` requests bypass translation and forward directly to Anthropic, maintaining full compatibility while providing a fallback mechanism for translation issues.
-
-See `docs/projectplan-anthropic-passthrough.md` for complete implementation details.
-
 ## Other Notes
 
 - Ensure Bun (>= 1.2.x) is installed for all scripts and local dev.

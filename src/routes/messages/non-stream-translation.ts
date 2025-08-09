@@ -58,13 +58,13 @@ function translateAnthropicMessagesToOpenAI(
 
 function reorderToolMessages(messages: Array<Message>): Array<Message> {
   const result: Array<Message> = []
-  let pendingToolResults: Array<Message> = []
+  const pendingToolResults: Array<Message> = []
 
   for (const message of messages) {
     if (message.role === "tool") {
       // This is a tool result, add it to pending
       pendingToolResults.push(message)
-    } 
+    }
   }
 
   for (const message of messages) {

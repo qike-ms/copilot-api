@@ -43,7 +43,6 @@ describe("Tracing Utils", () => {
     })
   })
 
-
   describe("Token Count Estimation", () => {
     it("should estimate tokens from simple messages", () => {
       const messages = [

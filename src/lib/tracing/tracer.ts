@@ -47,22 +47,27 @@ export class CopilotTracer {
     try {
       // Extract headers - handle both Hono request and standard Request objects
       const headers: Record<string, string> = {}
-      
+
       if (req.raw && req.raw instanceof Request) {
         // Hono request with raw property
         req.raw.headers.forEach((value: string, key: string) => {
           headers[key] = value
         })
-      } else if (req.headers && typeof req.headers.forEach === 'function') {
+      } else if (req.headers && typeof req.headers.forEach === "function") {
         // Standard Request object
         req.headers.forEach((value: string, key: string) => {
           headers[key] = value
         })
-      } else if (req.header && typeof req.header === 'function') {
+      } else if (req.header && typeof req.header === "function") {
         // Hono request - get common headers manually
         const commonHeaders = [
-          'authorization', 'content-type', 'user-agent', 'accept',
-          'x-session-id', 'x-user-id', 'x-request-id'
+          "authorization",
+          "content-type",
+          "user-agent",
+          "accept",
+          "x-session-id",
+          "x-user-id",
+          "x-request-id",
         ]
         for (const headerName of commonHeaders) {
           const value = req.header(headerName)
@@ -74,13 +79,13 @@ export class CopilotTracer {
 
       // Get request body
       let body = parsedBody
-      if (!body && req.json && typeof req.json === 'function') {
+      if (!body && req.json && typeof req.json === "function") {
         try {
           body = await req.json()
         } catch {
           body = null
         }
-      } else if (!body && req.raw && req.raw.clone) {
+      } else if (!body && req.raw?.clone) {
         try {
           body = await req.raw.clone().json()
         } catch {
@@ -93,8 +98,8 @@ export class CopilotTracer {
 
       const clientRequest: ClientRequest = {
         timestamp,
-        method: req.method || req.raw?.method || 'POST',
-        url: req.url || req.raw?.url || 'unknown',
+        method: req.method || req.raw?.method || "POST",
+        url: req.url || req.raw?.url || "unknown",
         //headers: this.config.redactHeaders ? this.redactSensitiveHeaders(headers) : headers,
         //body: this.config.redactHeaders ? this.redactSensitiveBodyData(body) : body,
         headers: headers,
@@ -430,7 +435,7 @@ export class CopilotTracer {
    */
   private redactSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
     const redactedHeaders = { ...headers }
-  
+
     const sensitiveKeys = [
       "authorization",
       "x-api-key",
@@ -444,10 +449,10 @@ export class CopilotTracer {
       "bearer",
       "proxy-authorization",
     ]
-  
+
     for (const [key, value] of Object.entries(redactedHeaders)) {
       const lowerKey = key.toLowerCase()
-  
+
       if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
         if (value && typeof value === "string") {
           if (value.length > 14) {
@@ -464,7 +469,7 @@ export class CopilotTracer {
         }
       }
     }
-  
+
     return redactedHeaders
   }
 
